@@ -49,10 +49,13 @@ export const rateArtifacts = (
     artifacts: Artifact[],
     scenes: Scene[]
 ): ArtifactRated[] => {
-    const avgLikesPerArtifact = divide(
-        scenes.reduce((acc, scene) => acc + (scene?.o_counter ?? 0), 0),
-        artifacts.length
+    const totalLikes = scenes.reduce(
+        (acc, scene) => acc + (scene?.o_counter ?? 0),
+        0
     );
+
+    const avgLikesPerArtifact = divide(totalLikes, artifacts.length);
+
     const avgScenesPerArtifact = divide(scenes.length, artifacts.length);
 
     console.log(
