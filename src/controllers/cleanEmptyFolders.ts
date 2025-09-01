@@ -137,7 +137,7 @@ const findEmptyFolders = async (rootPath: string): Promise<EmptyFolder[]> => {
             foldersScanned++;
             if (foldersScanned % 50 === 0) {
                 process.stdout.write(
-                    `\\r  Scanned ${foldersScanned} folders...`
+                    `\n  Scanned ${foldersScanned} folders...`
                 );
             }
 
@@ -182,8 +182,14 @@ const deleteFolder = async (folderPath: string): Promise<boolean> => {
         // Try to remove the directory
         await fs.rmdir(folderPath, { recursive: true });
         return true;
-    } catch (error) {
-        console.error(`Failed to delete folder ${folderPath}: ${error}`);
+    } catch (error: any) {
+        if (error.code === "EACCES") {
+            console.error(
+                `Permission denied - try running with sudo: ${folderPath}`
+            );
+        } else {
+            console.error(`Failed to delete folder ${folderPath}: ${error}`);
+        }
         return false;
     }
 };
@@ -231,6 +237,14 @@ const interactiveMode = async (emptyFolders: EmptyFolder[]): Promise<void> => {
     print(`\\nInteractive mode completed:`, "blue");
     print(`  Deleted: ${deletedCount} folders`, "green");
     print(`  Skipped: ${skippedCount} folders`, "yellow");
+
+    if (deletedCount === 0 && skippedCount > 0) {
+        print(
+            `\\n💡 If you skipped due to permission errors, try running with sudo:`,
+            "yellow"
+        );
+        print(`  sudo $(which node) dist/index.js`, "cyan");
+    }
 };
 
 /**
@@ -262,6 +276,11 @@ const batchMode = async (emptyFolders: EmptyFolder[]): Promise<void> => {
     print(`  Deleted: ${deletedCount} folders`, "green");
     if (failedCount > 0) {
         print(`  Failed: ${failedCount} folders`, "red");
+        print(
+            `\\n💡 If you got permission errors, try running with sudo:`,
+            "yellow"
+        );
+        print(`  sudo $(which node) dist/index.js`, "cyan");
     }
 };
 
@@ -269,6 +288,12 @@ export const cleanEmptyFoldersController = async (): Promise<void> => {
     print(
         "\\nThis command will scan for folders that don't contain any video files.\\n",
         "yellow"
+    );
+
+    // Check if we have permission issues upfront
+    print(
+        "💡 Note: If you encounter permission errors, you may need to run with 'sudo $(which node) dist/index.js'\\n",
+        "cyan"
     );
 
     // Get the path to scan
