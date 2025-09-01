@@ -183,7 +183,7 @@ const promptAndUpdateRatings = async (
 
     const itemsToUpdate = ratedItems.map((item) => ({
         id: item.id,
-        rating: item.rating100,
+        rating: Math.floor(item.rating100),
     }));
 
     print(
@@ -221,7 +221,7 @@ const promptAndUpdateSceneRatings = async (
 
     const scenesToUpdate = ratedScenes.map((scene) => ({
         id: scene.id,
-        rating: scene.rating100,
+        rating: Math.floor(scene.rating100),
     }));
 
     print(
