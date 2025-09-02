@@ -1,6 +1,5 @@
 # New Feature Ideas
 
-- Search library for folders that don't have any video files in them
 - FFMpeg tools
     - Split movie into scenes
     - Combine videos
