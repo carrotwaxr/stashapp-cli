@@ -1,5 +1,6 @@
 import { analyzePerformersController } from "../../controllers/analyzePerformers.js";
 import { analyzeStudiosController } from "../../controllers/analyzeStudios.js";
+import { cleanEmptyFoldersController } from "../../controllers/cleanEmptyFolders.js";
 import { copyFilesController } from "../../controllers/copyFiles.js";
 import { organizeLibraryController } from "../../controllers/organizeLibrary.js";
 import { rateStashController } from "../../controllers/rateStashController.js";
@@ -60,6 +61,10 @@ export const getManageFilesMenuItems = (): MenuItem[] => [
     {
         name: "Organize Library Files",
         controller: organizeLibraryController,
+    },
+    {
+        name: "Clean Empty Folders",
+        controller: cleanEmptyFoldersController,
     },
     {
         name: "Back",
