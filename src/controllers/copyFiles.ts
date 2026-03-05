@@ -2,6 +2,7 @@ import os from "os";
 import { buildMenu } from "../commands/menus/buildMenu.js";
 import { getManageFilesMenuItems } from "../commands/menus/menuItems.js";
 import { quitCommand } from "../commands/quit.js";
+import { SceneFields, TagFields } from "stashapp-api";
 import { getStashInstance } from "../stash.js";
 import {
     copyScene,
@@ -64,7 +65,7 @@ export const copyFilesController = async (): Promise<void> => {
     const { findTags: { tags = [] } = {} } = await stash.query({
         findTags: {
             __args: { filter: { per_page: -1 } },
-            tags: { id: true, name: true },
+            tags: { ...TagFields },
         },
     });
     const tagChoices = tags.map((tag: any) => ({ text: tag.name }));
@@ -90,13 +91,9 @@ export const copyFilesController = async (): Promise<void> => {
             count: true,
             filesize: true,
             scenes: {
-                id: true,
-                title: true,
-                studio: { name: true },
-                performers: { name: true, gender: true, o_counter: true },
+                ...SceneFields,
                 files: { path: true, basename: true, size: true },
                 paths: { screenshot: true },
-                tags: { name: true },
             },
         },
     })) as any;

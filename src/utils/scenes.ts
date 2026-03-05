@@ -1,8 +1,12 @@
 import {
     Performer,
+    PerformerFields,
     Scene,
+    SceneFields,
     Studio,
+    StudioFields,
     Tag,
+    TagFields,
 } from "stashapp-api";
 import { getStashInstance } from "../stash.js";
 import { formatBytes } from "./format.js";
@@ -47,13 +51,9 @@ export const addScenesToFillSpace = async (
     let clearLoading = await loadingText("Calculating, maybe fapping a little");
 
     const sceneFields = {
-        id: true, title: true, rating100: true, o_counter: true,
-        studio: { id: true, name: true },
-        performers: { id: true, name: true, gender: true, o_counter: true, favorite: true },
-        tags: { id: true, name: true, favorite: true },
+        ...SceneFields,
         files: { path: true, basename: true, size: true },
         paths: { screenshot: true },
-        date: true, details: true,
     } as const;
 
     const favoriteStudioIDs = flattenByKey(favorites.studios, "id").map(String);
@@ -113,7 +113,6 @@ export const addScenesToFillSpace = async (
         },
     });
 
-    // TODO: type after stashapp-api v1
     const favoriteScenes = [
         ...scenesFromFavoritePerformers,
         ...scenesFromFavoriteStudios,
@@ -149,7 +148,6 @@ export const addScenesToFillSpace = async (
             "green"
         );
 
-        // TODO: remove assertion after stashapp-api v1 aligns these types
         const scored = scoreScenes(uniqueFavoriteScenes, favorites as any);
         const sortedByScore = sortScenesByCustomScore(scored);
 
@@ -168,7 +166,6 @@ export const addScenesToFillSpace = async (
     return [...scenesAlreadyIncluded, ...scenesToAdd];
 };
 
-// TODO: type more strictly after stashapp-api v1
 const getAllStashData = async () => {
     const stash = getStashInstance();
     let clearLoading = await loadingText("Getting female Performers");
@@ -185,7 +182,7 @@ const getAllStashData = async () => {
                     },
                 },
             },
-            performers: { id: true, name: true, gender: true, o_counter: true, scene_count: true, favorite: true, rating100: true, scenes: { id: true, o_counter: true } },
+            performers: { ...PerformerFields, scenes: { id: true, o_counter: true } },
         },
     });
     clearLoading("Done");
@@ -204,7 +201,7 @@ const getAllStashData = async () => {
                     },
                 },
             },
-            performers: { id: true, name: true, gender: true, o_counter: true, scene_count: true, favorite: true, rating100: true, scenes: { id: true, o_counter: true } },
+            performers: { ...PerformerFields, scenes: { id: true, o_counter: true } },
         },
     });
     clearLoading("Done");
@@ -214,7 +211,7 @@ const getAllStashData = async () => {
         await stash.query({
             findStudios: {
                 __args: { filter: { per_page: -1 } },
-                studios: { id: true, name: true, favorite: true, rating100: true, o_counter: true },
+                studios: { ...StudioFields },
             },
         });
     clearLoading("Done");
@@ -223,16 +220,16 @@ const getAllStashData = async () => {
     const { findTags: { tags } = { tags: [] } } = await stash.query({
         findTags: {
             __args: { filter: { per_page: -1 } },
-            tags: { id: true, name: true, favorite: true, rating100: true },
+            tags: { ...TagFields },
         },
     });
     clearLoading("Done");
 
     return {
-        femalePerformers: femalePerformers as unknown as Performer[],
-        malePerformers: malePerformers as unknown as Performer[],
-        studios: studios as unknown as Studio[],
-        tags: tags as unknown as Tag[],
+        femalePerformers: femalePerformers as Performer[],
+        malePerformers: malePerformers as Performer[],
+        studios: studios as Studio[],
+        tags: tags as Tag[],
     };
 };
 
@@ -287,8 +284,7 @@ const scoreScene = (
     // initial score will be the o_counter on the Scene
     const initialScore = scene.o_counter ?? 0;
 
-    // TODO: type after stashapp-api v1
-    const performerScore = (scene.performers as Performer[]).reduce(
+    const performerScore = scene.performers.reduce(
         (acc: number, performer) => {
             if (performer.favorite) {
                 if (performer.gender === "FEMALE") {
@@ -302,10 +298,9 @@ const scoreScene = (
         0
     );
 
-    // TODO: type after stashapp-api v1
-    const studioScore = (scene.studio as Studio | null)?.favorite ? weights.studio : 0;
+    const studioScore = scene.studio?.favorite ? weights.studio : 0;
 
-    const tagScore = (scene.tags as Tag[]).reduce((acc: number, tag) => {
+    const tagScore = scene.tags.reduce((acc: number, tag) => {
         if (tag.favorite) {
             acc += weights.tag;
         }
@@ -379,10 +374,9 @@ export const dedupeScenes = (scenes: Scene[]): Scene[] => {
     }, []);
 };
 
-// TODO: type more strictly after stashapp-api v1
 export const getUniquePerformers = (scenes: Scene[]): Performer[] => {
     return scenes.reduce<Performer[]>((acc, { performers }) => {
-        (performers as unknown as Performer[]).forEach((performer) => {
+        performers.forEach((performer) => {
             const isAlreadyAccumulated = Boolean(
                 acc.find(({ id }) => id === performer.id)
             );

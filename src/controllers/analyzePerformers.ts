@@ -1,4 +1,4 @@
-import { Performer } from "stashapp-api";
+import { Performer, PerformerFields } from "stashapp-api";
 import { buildMenu } from "../commands/menus/buildMenu.js";
 import { getAnalyzeMenuItems } from "../commands/menus/menuItems.js";
 import { getStashInstance } from "../stash.js";
@@ -54,18 +54,13 @@ export const analyzePerformersController = async () => {
             },
             count: true,
             performers: {
-                id: true,
-                name: true,
-                gender: true,
-                o_counter: true,
-                scene_count: true,
-                favorite: true,
+                ...PerformerFields,
                 scenes: { id: true, o_counter: true },
             },
         },
     });
 
-    const performers = rawPerformers as unknown as Performer[];
+    const performers = rawPerformers as Performer[];
 
     finishQuerying(`\nSuccess! Found ${count} matching Performers.`);
 

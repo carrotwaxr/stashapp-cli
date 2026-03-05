@@ -18,9 +18,13 @@
 import chalk from "chalk";
 import {
     Performer,
+    PerformerFields,
     Scene,
+    SceneFields,
     Studio,
+    StudioFields,
     Tag,
+    TagFields,
 } from "stashapp-api";
 import { backCommand } from "../commands/back.js";
 import { buildMenu } from "../commands/menus/buildMenu.js";
@@ -267,11 +271,9 @@ export const rateStashController = async () => {
         findScenes: {
             __args: { filter: { per_page: -1 } },
             scenes: {
-                id: true, title: true, rating100: true, o_counter: true, date: true, details: true,
-                studio: { id: true, name: true, rating100: true },
-                performers: { id: true, name: true, gender: true, o_counter: true, rating100: true, favorite: true, scene_count: true },
-                tags: { id: true, name: true, favorite: true, rating100: true },
+                ...SceneFields,
                 files: { path: true, basename: true, size: true },
+                performers: { ...PerformerFields, scenes: { id: true, o_counter: true } },
             },
             count: true,
         },
@@ -291,7 +293,7 @@ export const rateStashController = async () => {
                 },
             },
             performers: {
-                id: true, name: true, gender: true, rating100: true, o_counter: true, scene_count: true, favorite: true,
+                ...PerformerFields,
                 scenes: { id: true, o_counter: true },
             },
             count: true,
@@ -313,7 +315,7 @@ export const rateStashController = async () => {
                 },
             },
             performers: {
-                id: true, name: true, gender: true, rating100: true, o_counter: true, scene_count: true, favorite: true,
+                ...PerformerFields,
                 scenes: { id: true, o_counter: true },
             },
             count: true,
@@ -334,7 +336,7 @@ export const rateStashController = async () => {
                 },
             },
             studios: {
-                id: true, name: true, rating100: true, o_counter: true, scene_count: true, favorite: true,
+                ...StudioFields,
             },
             count: true,
         },
@@ -353,7 +355,7 @@ export const rateStashController = async () => {
                 },
             },
             tags: {
-                id: true, name: true, rating100: true, scene_count: true, favorite: true,
+                ...TagFields,
             },
             count: true,
         },
@@ -373,17 +375,10 @@ export const rateStashController = async () => {
     console.log(chalk.green(`Scenes found:    ${scenes.length}`));
     console.log(chalk.gray("----------------------------------------"));
 
-    // Cast narrowed GenQL types to full types at the boundary
-    const allScenes = scenes as unknown as Scene[];
-    const allStudios = studios as unknown as Studio[];
-    const allTags = tags as unknown as Tag[];
-    const allMalePerformers = malePerformers as unknown as Performer[];
-    const allFemalePerformers = femalePerformers as unknown as Performer[];
-
     const ratedStudios: ArtifactRated[] = rateArtifacts(
         "studio",
-        allStudios,
-        allScenes.filter((scene) => scene.studio?.id)
+        studios as Studio[],
+        scenes as Scene[]
     );
 
     logArtifactRatings(ratedStudios, "Studios");
@@ -398,8 +393,8 @@ export const rateStashController = async () => {
 
     const ratedTags: ArtifactRated[] = rateArtifacts(
         "tag",
-        allTags,
-        allScenes.filter((scene) => scene.tags?.length)
+        tags as Tag[],
+        (scenes as Scene[]).filter((scene) => scene.tags?.length)
     );
 
     logArtifactRatings(ratedTags, "Tags");
@@ -407,8 +402,8 @@ export const rateStashController = async () => {
 
     const ratedMalePerformers: ArtifactRated[] = rateArtifacts(
         "performer",
-        allMalePerformers,
-        allScenes.filter((scene) =>
+        malePerformers as Performer[],
+        (scenes as Scene[]).filter((scene) =>
             scene.performers?.some((p) => p.gender === 'MALE')
         )
     );
@@ -425,8 +420,8 @@ export const rateStashController = async () => {
 
     const ratedFemalePerformers: ArtifactRated[] = rateArtifacts(
         "performer",
-        allFemalePerformers,
-        allScenes.filter((scene) =>
+        femalePerformers as Performer[],
+        (scenes as Scene[]).filter((scene) =>
             scene.performers?.some((p) => p.gender === 'FEMALE')
         )
     );
@@ -442,7 +437,7 @@ export const rateStashController = async () => {
     );
 
     const ratedScenes: SceneRated[] = rateScenes(
-        allScenes,
+        scenes as Scene[],
         ratedStudios as StudioRated[],
         ratedTags as TagRated[],
         [...ratedMalePerformers, ...ratedFemalePerformers] as PerformerRated[]
