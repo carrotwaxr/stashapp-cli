@@ -20,7 +20,7 @@ export const sortArrayOfObjects = (
 
     const { direction, secondarySortBy } = _options;
 
-    return arr.sort((a, b) => {
+    return [...arr].sort((a, b) => {
         if (direction === "ASC") {
             return (
                 a[sortBy] - b[sortBy] || a[secondarySortBy] - b[secondarySortBy]

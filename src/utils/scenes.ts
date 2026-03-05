@@ -312,7 +312,7 @@ const scoreScenes = (
 };
 
 const sortScenesByCustomScore = (scenes: Scene[]): Scene[] => {
-    return scenes.sort((a: any, b: any) => {
+    return [...scenes].sort((a: any, b: any) => {
         return (
             (b.phoenixCustomScoring?.score ?? 0) -
             (a.phoenixCustomScoring?.score ?? 0)

@@ -22,7 +22,7 @@ export const copyScene = async (
 
     const sceneTitle = scene.title || videoFile.name;
 
-    const performersSorted = scene.performers.sort((a, b) => {
+    const performersSorted = [...scene.performers].sort((a, b) => {
         const aGender = a.gender || "ZZZZZZZZZZZZZZZZZZsortlast";
         const bGender = b.gender || "ZZZZZZZZZZZZZZZZZZsortlast";
         const aOCounter = a.o_counter ?? 0;

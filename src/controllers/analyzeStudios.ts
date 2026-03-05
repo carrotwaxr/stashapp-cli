@@ -68,7 +68,7 @@ export const analyzeStudiosController = async () => {
     }
     logger.success("Hydration completed.");
 
-    const sortedByTotalDesc = hydratedResults.sort((a, b) => {
+    const sortedByTotalDesc = [...hydratedResults].sort((a, b) => {
         return b.o_counter - a.o_counter;
     });
     const favoritesByTotal = sortedByTotalDesc.slice(0, 100);
@@ -76,7 +76,7 @@ export const analyzeStudiosController = async () => {
     logger.success('Your Top 100 Studios by "Total Os" are:');
     logger.table(favoritesByTotalTable);
 
-    const sortedByPercentDesc = hydratedResults.sort((a, b) => {
+    const sortedByPercentDesc = [...hydratedResults].sort((a, b) => {
         return b.o_percent - a.o_percent;
     });
     const favoritesByPercent = sortedByPercentDesc.slice(0, 100);
