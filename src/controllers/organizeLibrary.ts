@@ -332,7 +332,7 @@ const generatePerformerFolders = (
             : matchingPerformers;
 
     // Sort by o_counter descending (highest first)
-    const sortedPerformers = filteredPerformers.sort(
+    const sortedPerformers = [...filteredPerformers].sort(
         (a, b) => (b.o_counter ?? 0) - (a.o_counter ?? 0)
     );
     const topPerformer = sortedPerformers[0];
