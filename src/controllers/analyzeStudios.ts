@@ -18,7 +18,8 @@ export const analyzeStudiosController = async () => {
     console.log(chalk.blue("Analyzing Studios in the Stash..."));
 
     const stash = getStashInstance();
-    // Fetch all studios using stash instance
+
+    // Fetch all studios in a single query
     const {
         findStudios: { count, studios },
     } = await stash.query({
@@ -32,56 +33,78 @@ export const analyzeStudiosController = async () => {
             studios: {
                 id: true,
                 name: true,
-                scene_count: true,
                 performer_count: true,
             },
         },
     });
     console.log(chalk.green("Found", count, "Studios containing at least one Scene."));
 
-    let hydratedResults = [];
-    console.log(chalk.blue("Hydrating Studios with Scene data..."));
-    for (const studio of studios) {
-        // Fetch scenes for each studio using stash instance
-        const {
-            findScenes: { count: sceneCount, filesize, scenes },
-        } = await stash.query({
-            findScenes: {
-                __args: {
-                    filter: {
-                        per_page: -1,
-                    },
-                    scene_filter: {
-                        studios: {
-                            modifier: "INCLUDES",
-                            value: [studio.id],
-                        },
-                    },
-                },
-                count: true,
-                filesize: true,
-                scenes: {
-                    id: true,
-                    o_counter: true,
+    // Fetch ALL scenes in a single query instead of N+1 per-studio queries
+    console.log(chalk.blue("Fetching all scenes for aggregation..."));
+    const {
+        findScenes: { scenes: allScenes },
+    } = await stash.query({
+        findScenes: {
+            __args: {
+                filter: {
+                    per_page: -1,
                 },
             },
-        });
+            scenes: {
+                id: true,
+                o_counter: true,
+                studio: { id: true },
+                files: { size: true },
+            },
+        },
+    });
 
-        const totalOs = scenes.reduce((acc: number, scene) => {
-            return acc + (scene.o_counter ?? 0);
-        }, 0);
+    // Aggregate scene data per studio in memory
+    const studioAggMap = new Map<
+        string,
+        { scene_count: number; filesize: number; o_counter: number }
+    >();
 
-        const oPercent = calculatePercent(totalOs, sceneCount);
+    for (const scene of allScenes) {
+        const studioId = scene.studio?.id;
+        if (!studioId) continue;
 
-        hydratedResults.push({
-            ...studio,
-            count: sceneCount,
-            filesize,
-            o_counter: totalOs,
-            o_percent: oPercent,
-        });
+        const agg = studioAggMap.get(studioId) ?? {
+            scene_count: 0,
+            filesize: 0,
+            o_counter: 0,
+        };
+
+        agg.scene_count += 1;
+        for (const f of scene.files ?? []) {
+            agg.filesize += Number(f.size) || 0;
+        }
+        agg.o_counter += scene.o_counter ?? 0;
+
+        studioAggMap.set(studioId, agg);
     }
-    console.log(chalk.green("Hydration completed."));
+
+    // Build hydrated results by joining studios with aggregated scene data
+    const hydratedResults = studios
+        .map((studio) => {
+            const agg = studioAggMap.get(studio.id) ?? {
+                scene_count: 0,
+                filesize: 0,
+                o_counter: 0,
+            };
+            return {
+                ...studio,
+                scene_count: agg.scene_count,
+                filesize: agg.filesize,
+                o_counter: agg.o_counter,
+                o_percent: agg.scene_count > 0
+                    ? calculatePercent(agg.o_counter, agg.scene_count)
+                    : 0,
+            };
+        })
+        .filter((s) => s.scene_count > 0);
+
+    console.log(chalk.green("Aggregation completed."));
 
     const sortedByTotalDesc = [...hydratedResults].sort((a, b) => {
         return b.o_counter - a.o_counter;
