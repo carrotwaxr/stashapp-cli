@@ -63,7 +63,9 @@ export const copyScene = async (
             videoFileDest,
             fs.constants.COPYFILE_EXCL
         );
-    } catch {}
+    } catch (err) {
+        console.error(`Error copying file to ${videoFileDest}:`, err);
+    }
 
     try {
         await fs.writeFile(nfoFileDest, nfoXML);

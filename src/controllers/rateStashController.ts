@@ -80,12 +80,13 @@ const createProgressBar = (total: number, label: string) => {
 const updateScenesWithRatings = async (
     scenesToUpdate: { id: string; rating: number }[],
     config: UpdateConfig = DEFAULT_UPDATE_CONFIG
-) => {
+): Promise<number> => {
     const stash = getStashInstance();
     const progressBar = createProgressBar(
         scenesToUpdate.length,
         "Updating scenes"
     );
+    let failCount = 0;
 
     // Since each scene has a different rating, we need to update them individually
     // even though we have a bulk update method, it only supports one rating for all scenes
@@ -100,22 +101,25 @@ const updateScenesWithRatings = async (
             progressBar.update();
             await sleep(config.delayBetweenRequests);
         } catch (error) {
+            failCount++;
             console.error(`\nError updating scene ${scene.id}: ${error}`);
             progressBar.update(); // Still update progress
         }
     }
+    return failCount;
 };
 
 // Update performers individually
 const updatePerformersWithRatings = async (
     performersToUpdate: { id: string; rating: number }[],
     config: UpdateConfig = DEFAULT_UPDATE_CONFIG
-) => {
+): Promise<number> => {
     const stash = getStashInstance();
     const progressBar = createProgressBar(
         performersToUpdate.length,
         "Updating performers"
     );
+    let failCount = 0;
 
     for (const performer of performersToUpdate) {
         try {
@@ -128,24 +132,27 @@ const updatePerformersWithRatings = async (
             progressBar.update();
             await sleep(config.delayBetweenRequests);
         } catch (error) {
+            failCount++;
             console.error(
                 `\nError updating performer ${performer.id}: ${error}`
             );
             progressBar.update(); // Still update progress
         }
     }
+    return failCount;
 };
 
 // Update studios individually
 const updateStudiosWithRatings = async (
     studiosToUpdate: { id: string; rating: number }[],
     config: UpdateConfig = DEFAULT_UPDATE_CONFIG
-) => {
+): Promise<number> => {
     const stash = getStashInstance();
     const progressBar = createProgressBar(
         studiosToUpdate.length,
         "Updating studios"
     );
+    let failCount = 0;
 
     for (const studio of studiosToUpdate) {
         try {
@@ -158,10 +165,12 @@ const updateStudiosWithRatings = async (
             progressBar.update();
             await sleep(config.delayBetweenRequests);
         } catch (error) {
+            failCount++;
             console.error(`\nError updating studio ${studio.id}: ${error}`);
             progressBar.update(); // Still update progress
         }
     }
+    return failCount;
 };
 
 // Prompt user and update ratings - generic version
@@ -191,16 +200,22 @@ const promptAndUpdateRatings = async (
         "blue"
     );
 
+    let failCount = 0;
     switch (type) {
         case "performers":
-            await updatePerformersWithRatings(itemsToUpdate, config);
+            failCount = await updatePerformersWithRatings(itemsToUpdate, config);
             break;
         case "studios":
-            await updateStudiosWithRatings(itemsToUpdate, config);
+            failCount = await updateStudiosWithRatings(itemsToUpdate, config);
             break;
     }
 
-    print(`✅ ${displayName} ratings updated successfully!`, "green");
+    const successCount = itemsToUpdate.length - failCount;
+    if (failCount > 0) {
+        print(`${displayName} ratings updated: ${successCount} succeeded (${failCount} failed)`, "yellow");
+    } else {
+        print(`${displayName} ratings updated successfully!`, "green");
+    }
 };
 
 // Specific function for scenes
@@ -228,8 +243,13 @@ const promptAndUpdateSceneRatings = async (
         `\nUpdating ${scenesToUpdate.length} ${displayName.toLowerCase()}...`,
         "blue"
     );
-    await updateScenesWithRatings(scenesToUpdate, config);
-    print(`✅ ${displayName} ratings updated successfully!`, "green");
+    const failCount = await updateScenesWithRatings(scenesToUpdate, config);
+    const successCount = scenesToUpdate.length - failCount;
+    if (failCount > 0) {
+        print(`${displayName} ratings updated: ${successCount} succeeded (${failCount} failed)`, "yellow");
+    } else {
+        print(`${displayName} ratings updated successfully!`, "green");
+    }
 };
 
 export const rateStashController = async () => {
