@@ -1,5 +1,4 @@
 import fs from "fs/promises";
-import http from "http";
 import path from "path";
 import { Scene } from "stashapp-api";
 import { buildSceneNFO } from "./nfo.js";
@@ -142,30 +141,16 @@ export const downloadJPG = async (
     filepath: string
 ): Promise<void> => {
     try {
-        const image = await new Promise<http.IncomingMessage>(
-            (resolve, reject) => {
-                http.get(url, (response) => {
-                    if (response.statusCode === 200) {
-                        resolve(response);
-                    } else {
-                        reject(
-                            new Error(
-                                `Failed to download image. HTTP Status Code: ${response.statusCode}`
-                            )
-                        );
-                    }
-                }).on("error", (err) => reject(err));
-            }
-        );
+        const response = await fetch(url);
 
-        const file = await fs.open(filepath, "w");
-        const writeStream = file.createWriteStream();
+        if (!response.ok) {
+            throw new Error(
+                `Failed to download image. HTTP Status Code: ${response.status}`
+            );
+        }
 
-        image.pipe(writeStream);
-
-        await new Promise<void>((resolve, reject) => {
-            writeStream.on("finish", () => resolve()).on("error", reject);
-        });
+        const buffer = Buffer.from(await response.arrayBuffer());
+        await fs.writeFile(filepath, buffer);
     } catch (err) {
         console.error("Error during download:", err);
     }
