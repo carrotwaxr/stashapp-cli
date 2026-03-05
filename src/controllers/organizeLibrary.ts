@@ -263,7 +263,7 @@ const buildFileName = (
 
     if (hasTags) {
         const keptTags = tagsStr.slice(0, -overflowCharCount);
-        overflowCharCount -= tagsStr.length;
+        overflowCharCount -= tagsStr.length - keptTags.length;
         tagsStr = keptTags;
     }
 
@@ -272,7 +272,7 @@ const buildFileName = (
             0,
             -overflowCharCount
         );
-        overflowCharCount -= malePerformersStr.length;
+        overflowCharCount -= malePerformersStr.length - keptMalePerformers.length;
         malePerformersStr = keptMalePerformers;
     }
 
@@ -281,13 +281,13 @@ const buildFileName = (
             0,
             -overflowCharCount
         );
-        overflowCharCount -= femalePerformersStr.length;
+        overflowCharCount -= femalePerformersStr.length - keptFemalePerformers.length;
         femalePerformersStr = keptFemalePerformers;
     }
 
     if (hasTitle && overflowCharCount > 0) {
         const keptTitle = titleStr.slice(0, -overflowCharCount);
-        overflowCharCount -= titleStr.length;
+        overflowCharCount -= titleStr.length - keptTitle.length;
         titleStr = keptTitle;
     }
 
