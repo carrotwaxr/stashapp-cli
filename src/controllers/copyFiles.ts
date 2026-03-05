@@ -1,5 +1,4 @@
 import os from "os";
-import { CriterionModifier } from "stashapp-api";
 import { buildMenu } from "../commands/menus/buildMenu.js";
 import { getManageFilesMenuItems } from "../commands/menus/menuItems.js";
 import { quitCommand } from "../commands/quit.js";
@@ -62,8 +61,11 @@ export const copyFilesController = async (): Promise<void> => {
 
     // Simulate tag selection (replace with actual tags from stash if available)
     const stash = getStashInstance();
-    const { findTags: { tags = [] } = {} } = await stash.findTags({
-        filter: { per_page: -1 },
+    const { findTags: { tags = [] } = {} } = await stash.query({
+        findTags: {
+            __args: { filter: { per_page: -1 } },
+            tags: { id: true, name: true },
+        },
     });
     const tagChoices = tags.map((tag: any) => ({ text: tag.name }));
     const { selectedIndexes } = await checkboxMenu(tagChoices);
@@ -72,14 +74,29 @@ export const copyFilesController = async (): Promise<void> => {
     const finishQuerying = await loadingText("Querying your Stash instance");
     const {
         findScenes: { count, filesize, scenes },
-    } = (await stash.findScenes({
-        filter: {
-            per_page: -1,
-        },
-        scene_filter: {
-            tags: {
-                modifier: CriterionModifier.Includes,
-                value: tagIDs.map(String),
+    } = (await stash.query({
+        findScenes: {
+            __args: {
+                filter: {
+                    per_page: -1,
+                },
+                scene_filter: {
+                    tags: {
+                        modifier: 'INCLUDES',
+                        value: tagIDs.map(String),
+                    },
+                },
+            },
+            count: true,
+            filesize: true,
+            scenes: {
+                id: true,
+                title: true,
+                studio: { name: true },
+                performers: { name: true, gender: true, o_counter: true },
+                files: { path: true, basename: true, size: true },
+                paths: { screenshot: true },
+                tags: { name: true },
             },
         },
     })) as any;

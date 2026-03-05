@@ -1,8 +1,7 @@
 import fs from "fs";
 import path from "path";
 import chalk from "chalk";
-import { GenderEnum, Scene, SceneFilterType, Studio } from "stashapp-api";
-import { CriterionModifier } from "stashapp-api/dist/generated/graphql.js";
+import type { Scene, SceneFilterType, Studio } from "stashapp-api";
 import { backCommand } from "../commands/back.js";
 import { buildMenu } from "../commands/menus/buildMenu.js";
 import { getManageFilesMenuItems } from "../commands/menus/menuItems.js";
@@ -63,19 +62,38 @@ export const organizeLibraryController = async () => {
 
     if (!organizationDetails) return;
 
-    const { findScenes } = await stash.findScenes({
-        filter: {
-            per_page: -1,
-        },
-        scene_filter: {
-            ...organizationDetails.sceneFilter,
+    const { findScenes } = await stash.query({
+        findScenes: {
+            __args: {
+                filter: {
+                    per_page: -1,
+                },
+                scene_filter: {
+                    ...organizationDetails.sceneFilter,
+                },
+            },
+            count: true,
+            scenes: {
+                id: true,
+                title: true,
+                rating100: true,
+                o_counter: true,
+                date: true,
+                studio: { id: true, name: true },
+                performers: { id: true, name: true, gender: true },
+                tags: { id: true, name: true },
+                files: { path: true, basename: true, size: true },
+            },
         },
     });
 
     const {
         findStudios: { studios },
-    } = await stash.findStudios({
-        filter: { per_page: -1 },
+    } = await stash.query({
+        findStudios: {
+            __args: { filter: { per_page: -1 } },
+            studios: { id: true, name: true, parent_studio: { id: true, name: true } },
+        },
     });
 
     // Build scenesToOrganize and filter out duplicates by newFilepath
@@ -159,7 +177,12 @@ export const organizeLibraryController = async () => {
     // Call organizeScenes with scenes array and dry run selection
     const results = organizeScenes(scenesToOrganize, isDryRun);
 
-    await stash.metadataScan({ input: { paths: null } });
+    await stash.mutation({
+        metadataScan: {
+            __args: { input: {} },
+            __typename: true,
+        },
+    });
 
     // Notify user about scan
     console.log();
@@ -210,11 +233,11 @@ const buildFileName = (
 
     let titleStr = scene.title ?? "";
     let malePerformersStr = performers
-        .filter((p) => p.gender === GenderEnum.Male)
+        .filter((p) => p.gender === 'MALE')
         .map((p) => p.name)
         .join(" ");
     let femalePerformersStr = performers
-        .filter((p) => p.gender === GenderEnum.Female)
+        .filter((p) => p.gender === 'FEMALE')
         .map((p) => p.name)
         .join(" ");
     let tagsStr = tags.map((t) => t.name).join(" ");
@@ -297,10 +320,10 @@ const filterScenesByPerformerSelections = (
 
     return scenes.filter((scene) => {
         const hasMalePerformer = scene.performers.some(
-            (p) => p.gender === GenderEnum.Male
+            (p) => p.gender === 'MALE'
         );
         const hasFemalePerformer = scene.performers.some(
-            (p) => p.gender === GenderEnum.Female
+            (p) => p.gender === 'FEMALE'
         );
 
         if (maleFilter && femaleFilter)
@@ -703,7 +726,7 @@ const getUserOrganizationDetails =
                     checked: isStashIDFilterLocked,
                     disabled: isStashIDFilterLocked,
                     sceneFilter: {
-                        id: { modifier: CriterionModifier.NotNull, value: 0 },
+                        id: { modifier: 'NOT_NULL', value: 0 },
                     },
                 },
                 {
@@ -712,7 +735,7 @@ const getUserOrganizationDetails =
                     disabled: isStudioFilterLocked,
                     sceneFilter: {
                         studios: {
-                            modifier: CriterionModifier.NotNull,
+                            modifier: 'NOT_NULL',
                             value: [""],
                         },
                     },
@@ -723,7 +746,7 @@ const getUserOrganizationDetails =
                     disabled: isTitleFilterLocked,
                     sceneFilter: {
                         title: {
-                            modifier: CriterionModifier.NotNull,
+                            modifier: 'NOT_NULL',
                             value: "",
                         },
                     },
@@ -734,7 +757,7 @@ const getUserOrganizationDetails =
                     disabled: false,
                     sceneFilter: {
                         date: {
-                            modifier: CriterionModifier.NotNull,
+                            modifier: 'NOT_NULL',
                             value: "",
                         },
                     },
@@ -745,7 +768,7 @@ const getUserOrganizationDetails =
                     disabled: false,
                     sceneFilter: {
                         details: {
-                            modifier: CriterionModifier.NotNull,
+                            modifier: 'NOT_NULL',
                             value: "",
                         },
                     },
@@ -758,7 +781,7 @@ const getUserOrganizationDetails =
                         performerGender === "Male",
                     sceneFilter: {
                         performer_count: {
-                            modifier: CriterionModifier.GreaterThan,
+                            modifier: 'GREATER_THAN',
                             value: 0,
                         },
                     },
@@ -771,7 +794,7 @@ const getUserOrganizationDetails =
                         performerGender === "Female",
                     sceneFilter: {
                         performer_count: {
-                            modifier: CriterionModifier.GreaterThan,
+                            modifier: 'GREATER_THAN',
                             value: 0,
                         },
                     },
@@ -782,7 +805,7 @@ const getUserOrganizationDetails =
                     disabled: false,
                     sceneFilter: {
                         tag_count: {
-                            modifier: CriterionModifier.GreaterThan,
+                            modifier: 'GREATER_THAN',
                             value: 0,
                         },
                     },
@@ -793,7 +816,7 @@ const getUserOrganizationDetails =
                     disabled: false,
                     sceneFilter: {
                         o_counter: {
-                            modifier: CriterionModifier.GreaterThan,
+                            modifier: 'GREATER_THAN',
                             value: 0,
                         },
                     },

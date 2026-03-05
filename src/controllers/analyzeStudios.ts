@@ -1,5 +1,4 @@
 import chalk from "chalk";
-import { CriterionModifier } from "stashapp-api";
 import { buildMenu } from "../commands/menus/buildMenu.js";
 import { getAnalyzeMenuItems } from "../commands/menus/menuItems.js";
 import { getStashInstance } from "../stash.js";
@@ -22,9 +21,20 @@ export const analyzeStudiosController = async () => {
     // Fetch all studios using stash instance
     const {
         findStudios: { count, studios },
-    } = await stash.findStudios({
-        filter: {
-            per_page: -1,
+    } = await stash.query({
+        findStudios: {
+            __args: {
+                filter: {
+                    per_page: -1,
+                },
+            },
+            count: true,
+            studios: {
+                id: true,
+                name: true,
+                scene_count: true,
+                performer_count: true,
+            },
         },
     });
     console.log(chalk.green("Found", count, "Studios containing at least one Scene."));
@@ -35,14 +45,24 @@ export const analyzeStudiosController = async () => {
         // Fetch scenes for each studio using stash instance
         const {
             findScenes: { count: sceneCount, filesize, scenes },
-        } = await stash.findScenes({
-            filter: {
-                per_page: -1,
-            },
-            scene_filter: {
-                studios: {
-                    modifier: CriterionModifier.Includes,
-                    value: [studio.id],
+        } = await stash.query({
+            findScenes: {
+                __args: {
+                    filter: {
+                        per_page: -1,
+                    },
+                    scene_filter: {
+                        studios: {
+                            modifier: "INCLUDES",
+                            value: [studio.id],
+                        },
+                    },
+                },
+                count: true,
+                filesize: true,
+                scenes: {
+                    id: true,
+                    o_counter: true,
                 },
             },
         });

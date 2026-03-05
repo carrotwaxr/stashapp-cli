@@ -8,9 +8,9 @@ interface SortOptions {
     secondarySortBy?: string;
 }
 
-export const sortArrayOfObjects = <T extends Record<string, unknown>>(
+export const sortArrayOfObjects = <T>(
     arr: T[],
-    sortBy: string,
+    sortBy: keyof T & string,
     options: SortOptions = {}
 ): T[] => {
     const _options = {
@@ -23,8 +23,8 @@ export const sortArrayOfObjects = <T extends Record<string, unknown>>(
     return [...arr].sort((a, b) => {
         const aVal = Number(a[sortBy]);
         const bVal = Number(b[sortBy]);
-        const aSecondary = Number(a[secondarySortBy]);
-        const bSecondary = Number(b[secondarySortBy]);
+        const aSecondary = Number((a as Record<string, unknown>)[secondarySortBy]);
+        const bSecondary = Number((b as Record<string, unknown>)[secondarySortBy]);
 
         if (direction === "ASC") {
             return aVal - bVal || aSecondary - bSecondary;
