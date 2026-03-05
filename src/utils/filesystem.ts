@@ -72,7 +72,7 @@ export const copyScene = async (
     }
 
     if (scene.paths?.screenshot) {
-        const posterURL = `${scene.paths.screenshot}&apikey=${process.env.GRAPHQL_API_KEY}`;
+        const posterURL = `${scene.paths.screenshot}&apikey=${process.env.STASH_API_KEY}`;
         const posterDestPath = path.join(
             finalDestinationFolder,
             `${newFileNameNoExt}-poster.jpg`
@@ -123,7 +123,7 @@ export const generateActorsMetadata = async (
 
             await ensureDirectoriesExist(finalDestinationFolder);
 
-            const imageURL = `${performer.image_path}&apikey=${process.env.GRAPHQL_API_KEY}`;
+            const imageURL = `${performer.image_path}&apikey=${process.env.STASH_API_KEY}`;
             const destFilePath = path.join(
                 finalDestinationFolder,
                 "folder.jpg"
