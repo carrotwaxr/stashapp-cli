@@ -17,9 +17,7 @@ const getPerformerMetadata = (
 } => {
     const scenesCumTo = performer.scenes.filter((scene: Scene) => {
         const oCounter = scene.o_counter ?? 0;
-        return typeof oCounter === "number"
-            ? oCounter > 0
-            : parseInt(oCounter as any) > 0;
+        return oCounter > 0;
     });
 
     const countScenesCumTo = scenesCumTo.length;
@@ -190,7 +188,7 @@ export const logFemalePerformer = async (
     }
 };
 
-export const logPerformer = (performer: any): Promise<void> | undefined => {
+export const logPerformer = (performer: PerformerWithMetadata): Promise<void> | undefined => {
     if (performer.gender === "FEMALE") {
         return logFemalePerformer(performer);
     }

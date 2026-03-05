@@ -23,8 +23,8 @@ import chalk from "chalk";
 
 export const print = (text: string, color?: keyof typeof chalk) => {
     if (color && typeof chalk[color] === "function") {
-        // @ts-ignore
-        console.log(chalk[color](text));
+        const colorFn = chalk[color] as (...text: unknown[]) => string;
+        console.log(colorFn(text));
     } else {
         console.log(text);
     }

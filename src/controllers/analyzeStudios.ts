@@ -47,13 +47,8 @@ export const analyzeStudiosController = async () => {
             },
         });
 
-        const totalOs = scenes.reduce((acc: any, scene: any) => {
-            return (
-                acc +
-                (scene.o_counter !== undefined
-                    ? parseInt(scene.o_counter as any)
-                    : 0)
-            );
+        const totalOs = scenes.reduce((acc: number, scene) => {
+            return acc + (scene.o_counter ?? 0);
         }, 0);
 
         const oPercent = calculatePercent(totalOs, sceneCount);

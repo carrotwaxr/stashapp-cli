@@ -5,7 +5,7 @@ export const calculatePercent = (
     dividend: number | string,
     divisor: number | string
 ): number => {
-    return (parseInt(dividend as string) / parseInt(divisor as string)) * 100;
+    return (parseInt(dividend as string, 10) / parseInt(divisor as string, 10)) * 100;
 };
 
 export const convertMbToBytes = (megabytes: number): number => {
@@ -13,7 +13,7 @@ export const convertMbToBytes = (megabytes: number): number => {
 };
 
 export const formatBytes = (bytes: number, decimals: number = 2): string => {
-    if (bytes == 0) {
+    if (bytes === 0) {
         return "0 Bytes";
     }
 

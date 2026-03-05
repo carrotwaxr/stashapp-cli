@@ -8,11 +8,11 @@ interface SortOptions {
     secondarySortBy?: string;
 }
 
-export const sortArrayOfObjects = (
-    arr: Array<Record<string, any>>,
+export const sortArrayOfObjects = <T extends Record<string, unknown>>(
+    arr: T[],
     sortBy: string,
     options: SortOptions = {}
-) => {
+): T[] => {
     const _options = {
         ...defaultSortOptions,
         ...options,
@@ -21,14 +21,15 @@ export const sortArrayOfObjects = (
     const { direction, secondarySortBy } = _options;
 
     return [...arr].sort((a, b) => {
+        const aVal = Number(a[sortBy]);
+        const bVal = Number(b[sortBy]);
+        const aSecondary = Number(a[secondarySortBy]);
+        const bSecondary = Number(b[secondarySortBy]);
+
         if (direction === "ASC") {
-            return (
-                a[sortBy] - b[sortBy] || a[secondarySortBy] - b[secondarySortBy]
-            );
+            return aVal - bVal || aSecondary - bSecondary;
         } else {
-            return (
-                b[sortBy] - a[sortBy] || b[secondarySortBy] - a[secondarySortBy]
-            );
+            return bVal - aVal || bSecondary - aSecondary;
         }
     });
 };
