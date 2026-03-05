@@ -254,6 +254,7 @@ const getAverageArtifactScoreForScene = (
         : [avgPerformerScore];
 
     const allScores = [studioScore, ...tagScores, ...performerScores];
+    if (allScores.length === 0) return 0;
     const averageScore = Math.floor(
         allScores.reduce((acc, score) => acc + score, 0) / allScores.length
     );
@@ -291,9 +292,9 @@ const getSceneRating = (
         };
     }
 
-    const oCountMultiplier = Number(
-        (oCounter / avgLikesPerLikedScene / 20 + 1).toFixed(4)
-    );
+    const oCountMultiplier = avgLikesPerLikedScene === 0
+        ? 1
+        : Number((oCounter / avgLikesPerLikedScene / 20 + 1).toFixed(4));
 
     let rating100 = Math.floor(averageArtifactScore * oCountMultiplier);
     if (rating100 > 100) {
