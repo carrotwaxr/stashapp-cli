@@ -1,6 +1,6 @@
-import chalk from "chalk";
 import fs from "fs";
 import path from "path";
+import chalk from "chalk";
 import { GenderEnum, Scene, SceneFilterType, Studio } from "stashapp-api";
 import { CriterionModifier } from "stashapp-api/dist/generated/graphql.js";
 import { backCommand } from "../commands/back.js";
