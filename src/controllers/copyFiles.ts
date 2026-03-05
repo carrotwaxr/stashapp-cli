@@ -1,8 +1,8 @@
 import os from "os";
+import { SceneFields, TagFields, type Scene } from "stashapp-api";
 import { buildMenu } from "../commands/menus/buildMenu.js";
 import { getManageFilesMenuItems } from "../commands/menus/menuItems.js";
 import { quitCommand } from "../commands/quit.js";
-import { SceneFields, TagFields } from "stashapp-api";
 import { getStashInstance } from "../stash.js";
 import {
     copyScene,
@@ -68,7 +68,7 @@ export const copyFilesController = async (): Promise<void> => {
             tags: { ...TagFields },
         },
     });
-    const tagChoices = tags.map((tag: any) => ({ text: tag.name }));
+    const tagChoices = tags.map((tag) => ({ text: tag.name }));
     const { selectedIndexes } = await checkboxMenu(tagChoices);
     const tagIDs = selectedIndexes.map((idx: number) => parseInt(tags[idx].id));
 
@@ -96,7 +96,7 @@ export const copyFilesController = async (): Promise<void> => {
                 paths: { screenshot: true },
             },
         },
-    })) as any;
+    })) as { findScenes: { count: number; filesize: number; scenes: Scene[] } };
     finishQuerying(
         `Success! Found ${count} matching Scenes totalling ${formatBytes(filesize)}.`
     );

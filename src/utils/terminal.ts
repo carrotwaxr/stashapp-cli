@@ -42,7 +42,7 @@ export const selectMenu = async (
 ): Promise<{ selectedIndex: number; selectedText: string }> => {
     const selectedText = await selectPrompt({
         message: "Select an option:",
-        choices: items.map((item, idx) => ({ name: item, value: item })),
+        choices: items.map((item) => ({ name: item, value: item })),
     });
     return { selectedIndex: items.indexOf(selectedText), selectedText };
 };

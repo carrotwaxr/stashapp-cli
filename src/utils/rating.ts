@@ -11,10 +11,6 @@ type Rated = {
     ratingFormula: string;
     ratingFormulaExplained: string;
 };
-type ScoreFactor = {
-    label: string;
-    value: number;
-};
 
 export type ArtifactRated = Artifact & Rated;
 
