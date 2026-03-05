@@ -1,9 +1,9 @@
+import chalk from "chalk";
 import { CriterionModifier } from "stashapp-api";
 import { buildMenu } from "../commands/menus/buildMenu.js";
 import { getAnalyzeMenuItems } from "../commands/menus/menuItems.js";
 import { getStashInstance } from "../stash.js";
 import { calculatePercent, formatBytes } from "../utils/format.js";
-import * as logger from "../utils/logger.js";
 import { convertToTable } from "../utils/table.js";
 
 const columns = [
@@ -16,7 +16,7 @@ const columns = [
 ];
 
 export const analyzeStudiosController = async () => {
-    logger.info("Analyzing Studios in the Stash...");
+    console.log(chalk.blue("Analyzing Studios in the Stash..."));
 
     const stash = getStashInstance();
     // Fetch all studios using stash instance
@@ -27,10 +27,10 @@ export const analyzeStudiosController = async () => {
             per_page: -1,
         },
     });
-    logger.success("Found", count, "Studios containing at least one Scene.");
+    console.log(chalk.green("Found", count, "Studios containing at least one Scene."));
 
     let hydratedResults = [];
-    logger.info("Hydrating Studios with Scene data...");
+    console.log(chalk.blue("Hydrating Studios with Scene data..."));
     for (const studio of studios) {
         // Fetch scenes for each studio using stash instance
         const {
@@ -66,23 +66,23 @@ export const analyzeStudiosController = async () => {
             o_percent: oPercent,
         });
     }
-    logger.success("Hydration completed.");
+    console.log(chalk.green("Hydration completed."));
 
     const sortedByTotalDesc = hydratedResults.sort((a, b) => {
         return b.o_counter - a.o_counter;
     });
     const favoritesByTotal = sortedByTotalDesc.slice(0, 100);
     const favoritesByTotalTable = convertToTable(favoritesByTotal, columns);
-    logger.success('Your Top 100 Studios by "Total Os" are:');
-    logger.table(favoritesByTotalTable);
+    console.log(chalk.green('Your Top 100 Studios by "Total Os" are:'));
+    console.table(favoritesByTotalTable);
 
     const sortedByPercentDesc = hydratedResults.sort((a, b) => {
         return b.o_percent - a.o_percent;
     });
     const favoritesByPercent = sortedByPercentDesc.slice(0, 100);
     const favoritesByPercentTable = convertToTable(favoritesByPercent, columns);
-    logger.success('Your Top 100 Studios by "O Frequency" are:');
-    logger.table(favoritesByPercentTable);
+    console.log(chalk.green('Your Top 100 Studios by "O Frequency" are:'));
+    console.table(favoritesByPercentTable);
 
     const cleanupCandidates = [...hydratedResults]
         .filter(({ o_percent }) => {
@@ -96,8 +96,8 @@ export const analyzeStudiosController = async () => {
 
     const cleanupCandidatesTable = convertToTable(cleanupCandidates, columns);
 
-    logger.success("Here are some Studios that are candidates for cleanup:");
-    logger.table(cleanupCandidatesTable);
+    console.log(chalk.green("Here are some Studios that are candidates for cleanup:"));
+    console.table(cleanupCandidatesTable);
 
     await buildMenu(getAnalyzeMenuItems());
 };
