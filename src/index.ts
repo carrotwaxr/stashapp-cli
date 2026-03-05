@@ -2,18 +2,19 @@ import "dotenv/config";
 import { StashApp } from "stashapp-api";
 import { buildMenu } from "./commands/menus/buildMenu.js";
 import { getMainMenuItems } from "./commands/menus/menuItems.js";
-import { ensureConfigFile, promptForConfig, saveConfig } from "./config.js";
+import { loadConfig, promptForConfig, saveConfigToEnv } from "./config.js";
 import { setStashInstance } from "./stash.js";
 
 export const start = async () => {
-    let config = ensureConfigFile();
-    if (!config || !config.url || !config.apiKey) {
+    let config = loadConfig();
+    if (!config) {
         config = await promptForConfig();
-        saveConfig(config);
-        console.log("Config saved. Please restart the app.");
-        process.exit(0);
+        saveConfigToEnv(config);
+        // Re-set env vars so the rest of the app can use them
+        process.env.STASH_URL = config.url;
+        process.env.STASH_API_KEY = config.apiKey;
     }
-    // Establish connection to StashApp
+
     const stash = StashApp.init({ url: config.url, apiKey: config.apiKey });
     setStashInstance(stash);
 

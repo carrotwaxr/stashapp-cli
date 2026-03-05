@@ -5,30 +5,33 @@ import { input, print } from "./utils/terminal.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const CONFIG_PATH = path.resolve(__dirname, "../config/secrets.json");
+const ENV_PATH = path.resolve(__dirname, "../.env");
 
 export type StashConfig = {
     url: string;
     apiKey: string;
 };
 
-export function ensureConfigFile(): StashConfig | null {
-    if (!fs.existsSync(CONFIG_PATH)) {
-        // Prompt user for URL and API Key
-        // For now, create an empty config file
-        fs.mkdirSync(path.dirname(CONFIG_PATH), { recursive: true });
-        fs.writeFileSync(
-            CONFIG_PATH,
-            JSON.stringify({ url: "", apiKey: "" }, null, 2)
-        );
-        return null;
+export function loadConfig(): StashConfig | null {
+    const url = process.env.STASH_URL;
+    const apiKey = process.env.STASH_API_KEY;
+
+    if (url && apiKey) {
+        return { url, apiKey };
     }
-    const raw = fs.readFileSync(CONFIG_PATH, "utf-8");
-    return JSON.parse(raw);
+    return null;
 }
 
-export function saveConfig(config: StashConfig) {
-    fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+export function saveConfigToEnv(config: StashConfig) {
+    const lines = [
+        `STASH_URL=${config.url}`,
+        `STASH_API_KEY=${config.apiKey}`,
+        "",
+        "# Path prefix inside Stash's Docker container (default: /data)",
+        "STASH_DATA_PATH=/data",
+        "",
+    ];
+    fs.writeFileSync(ENV_PATH, lines.join("\n"));
 }
 
 export async function promptForConfig(): Promise<StashConfig> {
