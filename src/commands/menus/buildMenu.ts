@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import { print, selectMenu } from "../../utils/terminal.js";
 
 export type MenuItem = {
@@ -17,5 +18,10 @@ export async function buildMenu(
         selectedIndex: number;
     };
 
-    await menuItems[selectedIndex].controller();
+    try {
+        await menuItems[selectedIndex].controller();
+    } catch (error) {
+        console.error(chalk.red(`\nSomething went wrong: ${error instanceof Error ? error.message : error}`));
+        await buildMenu(menuItems, prompt);
+    }
 }
