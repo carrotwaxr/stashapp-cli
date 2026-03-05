@@ -95,7 +95,7 @@ export const rateScenes = (
     ratedTags: TagRated[],
     ratedPerformers: PerformerRated[]
 ): SceneRated[] => {
-    const likedScenes = scenes.filter((scene) => scene?.o_counter ?? 0 > 0);
+    const likedScenes = scenes.filter((scene) => (scene?.o_counter ?? 0) > 0);
     const totalLikes = likedScenes.reduce(
         (acc, scene) => acc + (scene?.o_counter ?? 0),
         0
@@ -181,7 +181,7 @@ const getArtifactRating = (
     });
 
     const likedScenes = artifactScenes.filter(
-        (scene) => scene?.o_counter ?? 0 > 0
+        (scene) => (scene?.o_counter ?? 0) > 0
     );
     const totalLikes = likedScenes.reduce(
         (acc, scene) => acc + (scene?.o_counter ?? 0),
