@@ -1,4 +1,4 @@
-import { CriterionModifier, GenderEnum, Performer } from "stashapp-api";
+import { Performer } from "stashapp-api";
 import { buildMenu } from "../commands/menus/buildMenu.js";
 import { getAnalyzeMenuItems } from "../commands/menus/menuItems.js";
 import { getStashInstance } from "../stash.js";
@@ -34,30 +34,44 @@ export const analyzePerformersController = async () => {
     const finishQuerying = await loadingText("Querying your Stash instance");
 
     const {
-        findPerformers: { count, performers } = { count: 0, performers: [] },
-    } = await stash.findPerformers({
-        filter: {
-            per_page: -1,
-        },
-        performer_filter: {
-            gender: {
-                modifier: CriterionModifier.Equals,
-                value: gender.toUpperCase() as (typeof GenderEnum)[keyof typeof GenderEnum],
+        findPerformers: { count, performers: rawPerformers } = { count: 0, performers: [] },
+    } = await stash.query({
+        findPerformers: {
+            __args: {
+                filter: {
+                    per_page: -1,
+                },
+                performer_filter: {
+                    gender: {
+                        modifier: 'EQUALS',
+                        value: gender.toUpperCase() as 'MALE' | 'FEMALE',
+                    },
+                    scene_count: {
+                        modifier: 'GREATER_THAN',
+                        value: sceneCountMin - 1,
+                    },
+                },
             },
-            scene_count: {
-                modifier: CriterionModifier.GreaterThan,
-                value: sceneCountMin - 1,
+            count: true,
+            performers: {
+                id: true,
+                name: true,
+                gender: true,
+                o_counter: true,
+                scene_count: true,
+                favorite: true,
+                scenes: { id: true, o_counter: true },
             },
         },
     });
+
+    const performers = rawPerformers as unknown as Performer[];
 
     finishQuerying(`\nSuccess! Found ${count} matching Performers.`);
 
     const finishAnalyzing = await loadingText("\nPerforming analysis");
 
-    const performersHydrated = hydratePerformersWithMetadata(
-        performers as Performer[]
-    );
+    const performersHydrated = hydratePerformersWithMetadata(performers);
 
     const performersCumTo = [...performersHydrated].filter((performer) => {
         return (

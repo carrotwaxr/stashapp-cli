@@ -1,15 +1,15 @@
-import { StashApp } from "stashapp-api";
+import { StashClient } from "stashapp-api";
 
-let stashInstance: StashApp | null = null;
+let stashInstance: StashClient | null = null;
 
-export function setStashInstance(instance: StashApp) {
+export function setStashInstance(instance: StashClient) {
     stashInstance = instance;
 }
 
-export function getStashInstance(): StashApp {
+export function getStashInstance(): StashClient {
     if (!stashInstance) {
         throw new Error(
-            "StashApp instance not initialized. Call setStashInstance() first."
+            "StashClient instance not initialized. Call setStashInstance() first."
         );
     }
     return stashInstance;

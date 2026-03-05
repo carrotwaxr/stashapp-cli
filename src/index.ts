@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { StashApp } from "stashapp-api";
+import { StashClient } from "stashapp-api";
 import { buildMenu } from "./commands/menus/buildMenu.js";
 import { getMainMenuItems } from "./commands/menus/menuItems.js";
 import { loadConfig, promptForConfig, saveConfigToEnv } from "./config.js";
@@ -15,7 +15,7 @@ export const start = async () => {
         process.env.STASH_API_KEY = config.apiKey;
     }
 
-    const stash = StashApp.init({ url: config.url, apiKey: config.apiKey });
+    const stash = new StashClient({ url: config.url, apiKey: config.apiKey });
     setStashInstance(stash);
 
     buildMenu(getMainMenuItems());

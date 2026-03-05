@@ -17,8 +17,6 @@
 
 import chalk from "chalk";
 import {
-    CriterionModifier,
-    GenderEnum,
     Performer,
     Scene,
     Studio,
@@ -92,10 +90,10 @@ const updateScenesWithRatings = async (
     // even though we have a bulk update method, it only supports one rating for all scenes
     for (const scene of scenesToUpdate) {
         try {
-            await stash.sceneUpdate({
-                input: {
-                    id: scene.id,
-                    rating100: scene.rating,
+            await stash.mutation({
+                sceneUpdate: {
+                    __args: { input: { id: scene.id, rating100: scene.rating } },
+                    id: true,
                 },
             });
             progressBar.update();
@@ -123,10 +121,10 @@ const updatePerformersWithRatings = async (
 
     for (const performer of performersToUpdate) {
         try {
-            await stash.performerUpdate({
-                input: {
-                    id: performer.id,
-                    rating100: performer.rating,
+            await stash.mutation({
+                performerUpdate: {
+                    __args: { input: { id: performer.id, rating100: performer.rating } },
+                    id: true,
                 },
             });
             progressBar.update();
@@ -156,10 +154,10 @@ const updateStudiosWithRatings = async (
 
     for (const studio of studiosToUpdate) {
         try {
-            await stash.studioUpdate({
-                input: {
-                    id: studio.id,
-                    rating100: studio.rating,
+            await stash.mutation({
+                studioUpdate: {
+                    __args: { input: { id: studio.id, rating100: studio.rating } },
+                    id: true,
                 },
             });
             progressBar.update();
@@ -265,9 +263,17 @@ export const rateStashController = async () => {
     let finishLoading = await loadingText("Loading Scenes...");
     const {
         findScenes: { scenes },
-    } = await stash.findScenes({
-        filter: {
-            per_page: -1,
+    } = await stash.query({
+        findScenes: {
+            __args: { filter: { per_page: -1 } },
+            scenes: {
+                id: true, title: true, rating100: true, o_counter: true, date: true, details: true,
+                studio: { id: true, name: true, rating100: true },
+                performers: { id: true, name: true, gender: true, o_counter: true, rating100: true, favorite: true, scene_count: true },
+                tags: { id: true, name: true, favorite: true, rating100: true },
+                files: { path: true, basename: true, size: true },
+            },
+            count: true,
         },
     });
     finishLoading();
@@ -275,19 +281,20 @@ export const rateStashController = async () => {
     finishLoading = await loadingText("Loading Male Performers...");
     const {
         findPerformers: { performers: malePerformers },
-    } = await stash.findPerformers({
-        filter: {
-            per_page: -1,
-        },
-        performer_filter: {
-            gender: {
-                modifier: CriterionModifier.Equals,
-                value: GenderEnum.Male,
+    } = await stash.query({
+        findPerformers: {
+            __args: {
+                filter: { per_page: -1 },
+                performer_filter: {
+                    gender: { modifier: 'EQUALS', value: 'MALE' },
+                    scene_count: { modifier: 'GREATER_THAN', value: 0 },
+                },
             },
-            scene_count: {
-                modifier: CriterionModifier.GreaterThan,
-                value: 0,
+            performers: {
+                id: true, name: true, gender: true, rating100: true, o_counter: true, scene_count: true, favorite: true,
+                scenes: { id: true, o_counter: true },
             },
+            count: true,
         },
     });
     finishLoading();
@@ -295,23 +302,21 @@ export const rateStashController = async () => {
     finishLoading = await loadingText("Loading Female Performers...");
     const {
         findPerformers: { performers: femalePerformers },
-    } = await stash.findPerformers({
-        filter: {
-            per_page: -1,
-        },
-        performer_filter: {
-            gender: {
-                modifier: CriterionModifier.Equals,
-                value: GenderEnum.Female,
+    } = await stash.query({
+        findPerformers: {
+            __args: {
+                filter: { per_page: -1 },
+                performer_filter: {
+                    gender: { modifier: 'EQUALS', value: 'FEMALE' },
+                    o_counter: { modifier: 'GREATER_THAN', value: 0 },
+                    scene_count: { modifier: 'GREATER_THAN', value: 0 },
+                },
             },
-            o_counter: {
-                modifier: CriterionModifier.GreaterThan,
-                value: 0,
+            performers: {
+                id: true, name: true, gender: true, rating100: true, o_counter: true, scene_count: true, favorite: true,
+                scenes: { id: true, o_counter: true },
             },
-            scene_count: {
-                modifier: CriterionModifier.GreaterThan,
-                value: 0,
-            },
+            count: true,
         },
     });
     finishLoading();
@@ -320,13 +325,18 @@ export const rateStashController = async () => {
 
     const {
         findStudios: { studios },
-    } = await stash.findStudios({
-        filter: { per_page: -1 },
-        studio_filter: {
-            scene_count: {
-                modifier: CriterionModifier.GreaterThan,
-                value: 0,
+    } = await stash.query({
+        findStudios: {
+            __args: {
+                filter: { per_page: -1 },
+                studio_filter: {
+                    scene_count: { modifier: 'GREATER_THAN', value: 0 },
+                },
             },
+            studios: {
+                id: true, name: true, rating100: true, o_counter: true, scene_count: true, favorite: true,
+            },
+            count: true,
         },
     });
     finishLoading();
@@ -334,15 +344,18 @@ export const rateStashController = async () => {
     finishLoading = await loadingText("Loading Tags...");
     const {
         findTags: { tags },
-    } = await stash.findTags({
-        filter: {
-            per_page: -1,
-        },
-        tag_filter: {
-            scene_count: {
-                modifier: CriterionModifier.GreaterThan,
-                value: 0,
+    } = await stash.query({
+        findTags: {
+            __args: {
+                filter: { per_page: -1 },
+                tag_filter: {
+                    scene_count: { modifier: 'GREATER_THAN', value: 0 },
+                },
             },
+            tags: {
+                id: true, name: true, rating100: true, scene_count: true, favorite: true,
+            },
+            count: true,
         },
     });
     finishLoading();
@@ -360,10 +373,17 @@ export const rateStashController = async () => {
     console.log(chalk.green(`Scenes found:    ${scenes.length}`));
     console.log(chalk.gray("----------------------------------------"));
 
+    // Cast narrowed GenQL types to full types at the boundary
+    const allScenes = scenes as unknown as Scene[];
+    const allStudios = studios as unknown as Studio[];
+    const allTags = tags as unknown as Tag[];
+    const allMalePerformers = malePerformers as unknown as Performer[];
+    const allFemalePerformers = femalePerformers as unknown as Performer[];
+
     const ratedStudios: ArtifactRated[] = rateArtifacts(
         "studio",
-        studios as Studio[],
-        scenes.filter((scene) => scene.studio?.id) as Scene[]
+        allStudios,
+        allScenes.filter((scene) => scene.studio?.id)
     );
 
     logArtifactRatings(ratedStudios, "Studios");
@@ -378,8 +398,8 @@ export const rateStashController = async () => {
 
     const ratedTags: ArtifactRated[] = rateArtifacts(
         "tag",
-        tags as Tag[],
-        scenes.filter((scene) => scene.tags?.length) as Scene[]
+        allTags,
+        allScenes.filter((scene) => scene.tags?.length)
     );
 
     logArtifactRatings(ratedTags, "Tags");
@@ -387,10 +407,10 @@ export const rateStashController = async () => {
 
     const ratedMalePerformers: ArtifactRated[] = rateArtifacts(
         "performer",
-        malePerformers as Performer[],
-        scenes.filter((scene) =>
-            scene.performers?.some((p) => p.gender === GenderEnum.Male)
-        ) as Scene[]
+        allMalePerformers,
+        allScenes.filter((scene) =>
+            scene.performers?.some((p) => p.gender === 'MALE')
+        )
     );
 
     logArtifactRatings(ratedMalePerformers, "Male Performers");
@@ -405,10 +425,10 @@ export const rateStashController = async () => {
 
     const ratedFemalePerformers: ArtifactRated[] = rateArtifacts(
         "performer",
-        femalePerformers as Performer[],
-        scenes.filter((scene) =>
-            scene.performers?.some((p) => p.gender === GenderEnum.Female)
-        ) as Scene[]
+        allFemalePerformers,
+        allScenes.filter((scene) =>
+            scene.performers?.some((p) => p.gender === 'FEMALE')
+        )
     );
 
     logArtifactRatings(ratedFemalePerformers, "Female Performers");
@@ -422,7 +442,7 @@ export const rateStashController = async () => {
     );
 
     const ratedScenes: SceneRated[] = rateScenes(
-        scenes as Scene[],
+        allScenes,
         ratedStudios as StudioRated[],
         ratedTags as TagRated[],
         [...ratedMalePerformers, ...ratedFemalePerformers] as PerformerRated[]

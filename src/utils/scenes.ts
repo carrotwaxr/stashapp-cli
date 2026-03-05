@@ -1,6 +1,4 @@
 import {
-    CriterionModifier,
-    GenderEnum,
     Performer,
     Scene,
     Studio,
@@ -27,19 +25,19 @@ export const addScenesToFillSpace = async (
     };
 
     print("Your favorite Female Performers are:", "yellow");
-    rotatingColors(flattenByKey(favorites.femalePerformers, "name"));
+    rotatingColors(flattenByKey(favorites.femalePerformers, "name") as string[]);
     print("\n\n");
 
     print("Your favorite Male Performers are:", "yellow");
-    rotatingColors(flattenByKey(favorites.malePerformers, "name"));
+    rotatingColors(flattenByKey(favorites.malePerformers, "name") as string[]);
     print("\n\n");
 
     print("Your favorite Studios are:", "yellow");
-    rotatingColors(flattenByKey(favorites.studios, "name"));
+    rotatingColors(flattenByKey(favorites.studios, "name") as string[]);
     print("\n\n");
 
     print("Your favorite Tags are:", "yellow");
-    rotatingColors(flattenByKey(favorites.tags, "name"));
+    rotatingColors(flattenByKey(favorites.tags, "name") as string[]);
     print("\n\n");
 
     print(
@@ -48,45 +46,70 @@ export const addScenesToFillSpace = async (
     );
     let clearLoading = await loadingText("Calculating, maybe fapping a little");
 
+    const sceneFields = {
+        id: true, title: true, rating100: true, o_counter: true,
+        studio: { id: true, name: true },
+        performers: { id: true, name: true, gender: true, o_counter: true, favorite: true },
+        tags: { id: true, name: true, favorite: true },
+        files: { path: true, basename: true, size: true },
+        paths: { screenshot: true },
+        date: true, details: true,
+    } as const;
+
     const favoriteStudioIDs = flattenByKey(favorites.studios, "id").map(String);
     const {
         findScenes: { scenes: scenesFromFavoriteStudios } = { scenes: [] },
-    } = await stash.findScenes({
-        filter: { per_page: -1 },
-        scene_filter: {
-            studios: {
-                modifier: CriterionModifier.Includes,
-                value: favoriteStudioIDs,
+    } = await stash.query({
+        findScenes: {
+            __args: {
+                filter: { per_page: -1 },
+                scene_filter: {
+                    studios: {
+                        modifier: 'INCLUDES',
+                        value: favoriteStudioIDs,
+                    },
+                    o_counter: {
+                        modifier: 'GREATER_THAN',
+                        value: 0,
+                    },
+                },
             },
-            o_counter: {
-                modifier: CriterionModifier.GreaterThan,
-                value: 0,
-            },
+            scenes: sceneFields,
         },
     });
 
     const favoriteTagIDs = flattenByKey(favorites.tags, "id").map(String);
     const { findScenes: { scenes: scenesFromFavoriteTags } = { scenes: [] } } =
-        await stash.findScenes({
-            filter: { per_page: -1 },
-            scene_filter: {
-                tags: {
-                    modifier: CriterionModifier.Includes,
-                    value: favoriteTagIDs,
+        await stash.query({
+            findScenes: {
+                __args: {
+                    filter: { per_page: -1 },
+                    scene_filter: {
+                        tags: {
+                            modifier: 'INCLUDES',
+                            value: favoriteTagIDs,
+                        },
+                        o_counter: {
+                            modifier: 'GREATER_THAN',
+                            value: 0,
+                        },
+                    },
                 },
-                o_counter: {
-                    modifier: CriterionModifier.GreaterThan,
-                    value: 0,
-                },
+                scenes: sceneFields,
             },
         });
 
     const {
         findScenes: { scenes: scenesFromFavoritePerformers } = { scenes: [] },
-    } = await stash.findScenes({
-        filter: { per_page: -1 },
-        scene_filter: {
-            performer_favorite: true,
+    } = await stash.query({
+        findScenes: {
+            __args: {
+                filter: { per_page: -1 },
+                scene_filter: {
+                    performer_favorite: true,
+                },
+            },
+            scenes: sceneFields,
         },
     });
 
@@ -151,13 +174,18 @@ const getAllStashData = async () => {
     let clearLoading = await loadingText("Getting female Performers");
     const {
         findPerformers: { performers: femalePerformers } = { performers: [] },
-    } = await stash.findPerformers({
-        filter: { per_page: -1 },
-        performer_filter: {
-            gender: {
-                modifier: CriterionModifier.Equals,
-                value: GenderEnum.Female,
+    } = await stash.query({
+        findPerformers: {
+            __args: {
+                filter: { per_page: -1 },
+                performer_filter: {
+                    gender: {
+                        modifier: 'EQUALS',
+                        value: 'FEMALE',
+                    },
+                },
             },
+            performers: { id: true, name: true, gender: true, o_counter: true, scene_count: true, favorite: true, rating100: true, scenes: { id: true, o_counter: true } },
         },
     });
     clearLoading("Done");
@@ -165,33 +193,46 @@ const getAllStashData = async () => {
     clearLoading = await loadingText("Getting male Performers");
     const {
         findPerformers: { performers: malePerformers } = { performers: [] },
-    } = await stash.findPerformers({
-        filter: { per_page: -1 },
-        performer_filter: {
-            gender: {
-                modifier: CriterionModifier.Equals,
-                value: GenderEnum.Male,
+    } = await stash.query({
+        findPerformers: {
+            __args: {
+                filter: { per_page: -1 },
+                performer_filter: {
+                    gender: {
+                        modifier: 'EQUALS',
+                        value: 'MALE',
+                    },
+                },
             },
+            performers: { id: true, name: true, gender: true, o_counter: true, scene_count: true, favorite: true, rating100: true, scenes: { id: true, o_counter: true } },
         },
     });
     clearLoading("Done");
 
     clearLoading = await loadingText("Getting Studios");
     const { findStudios: { studios } = { studios: [] } } =
-        await stash.findStudios({ filter: { per_page: -1 } });
+        await stash.query({
+            findStudios: {
+                __args: { filter: { per_page: -1 } },
+                studios: { id: true, name: true, favorite: true, rating100: true, o_counter: true },
+            },
+        });
     clearLoading("Done");
 
     clearLoading = await loadingText("Getting Tags");
-    const { findTags: { tags } = { tags: [] } } = await stash.findTags({
-        filter: { per_page: -1 },
+    const { findTags: { tags } = { tags: [] } } = await stash.query({
+        findTags: {
+            __args: { filter: { per_page: -1 } },
+            tags: { id: true, name: true, favorite: true, rating100: true },
+        },
     });
     clearLoading("Done");
 
     return {
-        femalePerformers,
-        malePerformers,
-        studios,
-        tags,
+        femalePerformers: femalePerformers as unknown as Performer[],
+        malePerformers: malePerformers as unknown as Performer[],
+        studios: studios as unknown as Studio[],
+        tags: tags as unknown as Tag[],
     };
 };
 
@@ -212,14 +253,14 @@ export const getTotalSize = (scenes: Scene[]): number => {
 
 const getVideoFileSize = (scene: Scene): number => {
     const [videoFile] = scene.files;
-    return videoFile.size;
+    return Number(videoFile.size);
 };
 
 const filterFavorites = <T extends { favorite?: boolean }>(arr: T[]): T[] => {
     return arr.filter(({ favorite }) => Boolean(favorite));
 };
 
-const flattenByKey = <T extends Record<string, unknown>>(arr: T[], key: keyof T): T[keyof T][] => {
+const flattenByKey = <T, K extends keyof T>(arr: T[], key: K): T[K][] => {
     return arr.map((item) => item[key]);
 };
 
