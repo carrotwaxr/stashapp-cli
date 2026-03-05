@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import chalk from "chalk";
+import { SceneFields, StudioFields } from "stashapp-api";
 import type { Scene, SceneFilterType, Studio } from "stashapp-api";
 import { backCommand } from "../commands/back.js";
 import { buildMenu } from "../commands/menus/buildMenu.js";
@@ -74,14 +75,7 @@ export const organizeLibraryController = async () => {
             },
             count: true,
             scenes: {
-                id: true,
-                title: true,
-                rating100: true,
-                o_counter: true,
-                date: true,
-                studio: { id: true, name: true },
-                performers: { id: true, name: true, gender: true },
-                tags: { id: true, name: true },
+                ...SceneFields,
                 files: { path: true, basename: true, size: true },
             },
         },
@@ -92,7 +86,7 @@ export const organizeLibraryController = async () => {
     } = await stash.query({
         findStudios: {
             __args: { filter: { per_page: -1 } },
-            studios: { id: true, name: true, parent_studio: { id: true, name: true } },
+            studios: { ...StudioFields, parent_studio: { id: true, name: true } },
         },
     });
 
