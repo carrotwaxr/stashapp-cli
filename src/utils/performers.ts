@@ -120,7 +120,7 @@ export const logFemalePerformer = async (
         hasHeight || hasMeasurements || hasTitsRealness || hasWeight;
 
     if (hasBodyInfo) {
-        const [bust, waist, hips] = performer.measurements
+        const [, waist, hips] = performer.measurements
             ? performer.measurements.split("-")
             : [null, null, null];
 

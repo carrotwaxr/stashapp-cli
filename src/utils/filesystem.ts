@@ -170,6 +170,7 @@ export const localizePath = (filepath: string): string => {
 
 export const sanitizeFilename = (filename: string): string => {
     // List of invalid characters for file names on Windows
+    // eslint-disable-next-line no-control-regex
     const invalidCharsWindows = /[<>:"/\\|?*\x00-\x1F]/g;
     // Invalid character for Linux: the forward slash '/'
     const invalidCharsLinux = /[/\0]/g;

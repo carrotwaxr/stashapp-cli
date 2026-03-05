@@ -148,7 +148,7 @@ export const addScenesToFillSpace = async (
             "green"
         );
 
-        const scored = scoreScenes(uniqueFavoriteScenes, favorites as any);
+        const scored = scoreScenes(uniqueFavoriteScenes, favorites);
         const sortedByScore = sortScenesByCustomScore(scored);
 
         const reduced = reduceScenesToSize(sortedByScore, availableBytes);

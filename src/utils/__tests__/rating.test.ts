@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
 import type { Performer, Scene, Studio, Tag } from "stashapp-api";
+import { describe, expect, it, vi } from "vitest";
 import {
     rateArtifacts,
     rateScenes,

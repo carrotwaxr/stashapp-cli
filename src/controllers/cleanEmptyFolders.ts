@@ -182,8 +182,9 @@ const deleteFolder = async (folderPath: string): Promise<boolean> => {
         // Try to remove the directory
         await fs.rmdir(folderPath, { recursive: true });
         return true;
-    } catch (error: any) {
-        if (error.code === "EACCES") {
+    } catch (error: unknown) {
+        const errCode = error instanceof Error ? (error as { code?: string }).code : undefined;
+        if (errCode === "EACCES") {
             console.error(
                 `Permission denied - try running with sudo: ${folderPath}`
             );
@@ -379,7 +380,7 @@ export const cleanEmptyFoldersController = async (): Promise<void> => {
         ]);
 
         switch (selectedText) {
-            case "Delete all empty folders":
+            case "Delete all empty folders": {
                 // Extra confirmation for large numbers or important folders
                 let confirmBatch = true;
                 if (emptyFolders.length > 10) {
@@ -404,6 +405,7 @@ export const cleanEmptyFoldersController = async (): Promise<void> => {
                     print("Operation cancelled.", "yellow");
                 }
                 break;
+            }
 
             case "Interactive mode (ask about each folder)":
                 await interactiveMode(emptyFolders);
