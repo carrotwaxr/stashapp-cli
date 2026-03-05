@@ -90,14 +90,15 @@ export const addScenesToFillSpace = async (
         },
     });
 
-    const favoriteScenes: any[] = [
+    // TODO: type after stashapp-api v1
+    const favoriteScenes = [
         ...scenesFromFavoritePerformers,
         ...scenesFromFavoriteStudios,
         ...scenesFromFavoriteTags,
-    ];
+    ] as Scene[];
 
-    const uniqueFavoriteScenes: any[] = dedupeScenes(favoriteScenes).filter(
-        (scene: any) => {
+    const uniqueFavoriteScenes = dedupeScenes(favoriteScenes).filter(
+        (scene) => {
             // remove Scenes already included by user selections
             const isAlreadyIncluded = scenesAlreadyIncluded.find(({ id }) => {
                 return id === scene.id;
@@ -125,6 +126,7 @@ export const addScenesToFillSpace = async (
             "green"
         );
 
+        // TODO: remove assertion after stashapp-api v1 aligns these types
         const scored = scoreScenes(uniqueFavoriteScenes, favorites as any);
         const sortedByScore = sortScenesByCustomScore(scored);
 
@@ -143,7 +145,8 @@ export const addScenesToFillSpace = async (
     return [...scenesAlreadyIncluded, ...scenesToAdd];
 };
 
-const getAllStashData = async (): Promise<any> => {
+// TODO: type more strictly after stashapp-api v1
+const getAllStashData = async () => {
     const stash = getStashInstance();
     let clearLoading = await loadingText("Getting female Performers");
     const {
@@ -216,7 +219,7 @@ const filterFavorites = <T extends { favorite?: boolean }>(arr: T[]): T[] => {
     return arr.filter(({ favorite }) => Boolean(favorite));
 };
 
-const flattenByKey = (arr: any[], key: string): any[] => {
+const flattenByKey = <T extends Record<string, unknown>>(arr: T[], key: keyof T): T[keyof T][] => {
     return arr.map((item) => item[key]);
 };
 
@@ -237,17 +240,15 @@ const reduceScenesToSize = (scenes: Scene[], bytes: number): Scene[] => {
 };
 
 const scoreScene = (
-    scene: any,
+    scene: Scene,
     weights: { female: number; male: number; studio: number; tag: number }
 ): number => {
     // initial score will be the o_counter on the Scene
-    const initialScore =
-        typeof scene.o_counter === "number"
-            ? scene.o_counter
-            : parseInt(scene.o_counter as any) || 0;
+    const initialScore = scene.o_counter ?? 0;
 
-    const performerScore = (scene.performers as any[]).reduce(
-        (acc, performer) => {
+    // TODO: type after stashapp-api v1
+    const performerScore = (scene.performers as Performer[]).reduce(
+        (acc: number, performer) => {
             if (performer.favorite) {
                 if (performer.gender === "FEMALE") {
                     acc += (performer.o_counter ?? 0) * weights.female;
@@ -260,9 +261,10 @@ const scoreScene = (
         0
     );
 
-    const studioScore = scene.studio?.favorite ? weights.studio : 0;
+    // TODO: type after stashapp-api v1
+    const studioScore = (scene.studio as Studio | null)?.favorite ? weights.studio : 0;
 
-    const tagScore = scene.tags.reduce((acc: number, tag: any) => {
+    const tagScore = (scene.tags as Tag[]).reduce((acc: number, tag) => {
         if (tag.favorite) {
             acc += weights.tag;
         }
@@ -311,8 +313,12 @@ const scoreScenes = (
     });
 };
 
+interface ScoredScene extends Scene {
+    phoenixCustomScoring?: { score: number; title: string };
+}
+
 const sortScenesByCustomScore = (scenes: Scene[]): Scene[] => {
-    return [...scenes].sort((a: any, b: any) => {
+    return [...scenes].sort((a: ScoredScene, b: ScoredScene) => {
         return (
             (b.phoenixCustomScoring?.score ?? 0) -
             (a.phoenixCustomScoring?.score ?? 0)
@@ -320,8 +326,8 @@ const sortScenesByCustomScore = (scenes: Scene[]): Scene[] => {
     });
 };
 
-export const dedupeScenes = (scenes: any[]): any[] => {
-    return scenes.reduce<any[]>((acc, scene) => {
+export const dedupeScenes = (scenes: Scene[]): Scene[] => {
+    return scenes.reduce<Scene[]>((acc, scene) => {
         const isAlreadyAccumulated = Boolean(
             acc.find(({ id }) => id === scene.id)
         );
@@ -332,9 +338,10 @@ export const dedupeScenes = (scenes: any[]): any[] => {
     }, []);
 };
 
-export const getUniquePerformers = (scenes: any[]): any[] => {
-    return scenes.reduce<any[]>((acc, { performers }) => {
-        (performers as any[]).forEach((performer: any) => {
+// TODO: type more strictly after stashapp-api v1
+export const getUniquePerformers = (scenes: Scene[]): Performer[] => {
+    return scenes.reduce<Performer[]>((acc, { performers }) => {
+        (performers as unknown as Performer[]).forEach((performer) => {
             const isAlreadyAccumulated = Boolean(
                 acc.find(({ id }) => id === performer.id)
             );

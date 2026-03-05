@@ -24,7 +24,7 @@ export const analyzePerformersController = async () => {
         "Enter the minimum number of Scenes a Performer can have to be considered (default 3)",
         "3"
     );
-    const sceneCountMin = parseInt(sceneCountMinStr);
+    const sceneCountMin = parseInt(sceneCountMinStr, 10);
 
     print(
         `\nGreat! We'll look for ${gender} Performers appearing in ${sceneCountMin} or more Scenes.\n`,
@@ -62,7 +62,7 @@ export const analyzePerformersController = async () => {
     const performersCumTo = [...performersHydrated].filter((performer) => {
         return (
             performer.o_counter !== undefined &&
-            parseInt(performer.o_counter as any) > 0
+            (performer.o_counter ?? 0) > 0
         );
     });
 
